@@ -1,4 +1,3 @@
-// UserInfo.js
 import React from 'react';
 
 function UserInfo({ showUserForm, setShowUserForm, name, email, setName, setEmail, handleSubmitUserForm, submitted }) {
