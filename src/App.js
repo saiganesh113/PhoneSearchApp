@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import axios from 'axios';
 import UserInfo from './UserInfo';
 import { Modal, Button } from 'react-bootstrap';
-import { Canvas as FabricCanvas, Image as FabricImage, Text as FabricText } from 'fabric';
+import { Canvas, Image, Text } from 'fabric'; // Updated import
 
 function PhotoSearch() {
   const [photo, setPhoto] = useState("");
@@ -37,22 +37,25 @@ function PhotoSearch() {
   const handleCloseModal = () => {
     setSelectedImage(null);
     setCaption("");
+    if (canvasRef.current) {
+      canvasRef.current.style.display = 'none'; // Hide canvas when modal is closed
+    }
   };
 
-  const handleSaveCaption = () => {
-    if (!selectedImage) return;
+  const handleDownload = () => {
+    if (!selectedImage || !canvasRef.current) return;
 
-    const canvas = new FabricCanvas(canvasRef.current);
-    FabricImage.fromURL(selectedImage.urls.regular, (img) => {
+    const canvas = new Canvas(canvasRef.current);
+    Image.fromURL(selectedImage.urls.regular, (img) => {
       canvas.setWidth(img.width);
       canvas.setHeight(img.height);
 
       img.scaleToWidth(img.width);
       canvas.add(img);
 
-      const text = new FabricText(caption, {
+      const text = new Text(caption, {
         left: 10,
-        top: img.height / 2,
+        top: img.height - 50, // Place text near bottom
         fontSize: 20,
         fill: '#000',
         backgroundColor: 'white',
@@ -67,19 +70,18 @@ function PhotoSearch() {
         [selectedImage.id]: caption,
       }));
 
+      // Show the canvas
+      canvasRef.current.style.display = 'block'; 
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'image_with_caption.png';
+      link.click();
+      
       // Close modal and clear state
       handleCloseModal();
     });
-  };
-
-  const handleDownload = () => {
-    if (!canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = 'image_with_caption.png';
-    link.click();
   };
 
   return (
@@ -165,16 +167,16 @@ function PhotoSearch() {
                   value={caption}
                   onChange={(e) => setCaption(e.target.value)}
                   placeholder="Enter caption here"
+                  style={{ width: '100%' }}
                 />
-                <Button className="btn btn-primary mt-2" onClick={handleSaveCaption}>
-                  Save Caption
-                </Button>
-                <Button className="btn btn-success mt-2 ml-2" onClick={handleDownload}>
+                <Button className="btn btn-success mt-2" onClick={handleDownload}>
                   Download
                 </Button>
               </div>
             </div>
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
+            <div style={{ width: '100%', marginTop: '20px' }}>
+              <canvas ref={canvasRef} style={{ border: '1px solid black', display: 'none' }} />
+            </div>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={handleCloseModal}>
